@@ -1,29 +1,28 @@
-import dotenv from 'dotenv';
-import { Pool } from 'pg';
-dotenv.config();
+import 'dotenv/config';
+import { Pool, type QueryResult, type QueryResultRow } from 'pg';
 
-let pool: Pool | null = null;
+const isProd = process.env.NODE_ENV === 'production';
 
-export function getDb(): Pool {
-  if (!pool) {
-    pool = new Pool({
-      host: process.env.PGHOST,
-      port: Number(process.env.PGPORT || 5433),
-      database: process.env.PGDATABASE,
-      user: process.env.PGUSER,
-      password: process.env.PGPASSWORD,
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-    });
-  }
-  return pool;
-}
+export const pool = new Pool(
+  process.env.DATABASE_URL
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+      }
+    : {
+        host: process.env.PGHOST,
+        port: Number(process.env.PGPORT ?? 5432),
+        database: process.env.PGDATABASE,
+        user: process.env.PGUSER,
+        password: process.env.PGPASSWORD,
+        ssl: isProd ? { rejectUnauthorized: false } : false
+      }
+);
 
-// Alias por compatibilidad si en algún archivo usamos getPool
-export const getPool = getDb;
+export const query = <T extends QueryResultRow = QueryResultRow>(
+  text: string,
+  params?: any[]
+): Promise<QueryResult<T>> => {
+  return pool.query<T>(text, params);
+};
 
-export async function query<T = any>(text: string, params?: any[]) {
-  const p = getDb();
-  return p.query<T>(text, params);
-}
