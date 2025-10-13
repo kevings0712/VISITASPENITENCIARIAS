@@ -1,17 +1,18 @@
-import express from 'express'
-import cors from 'cors'
-import helmet from 'helmet'
-import dotenv from 'dotenv'
-import routes from './routes'
+import express from 'express';
+import cors from 'cors';
+import authRoutes from './routes/auth.routes';
 
-dotenv.config()
-const app = express()
+const app = express();
 
-app.use(helmet())
-app.use(cors({ origin: process.env.CORS_ORIGIN?.split(',') || true }))
-app.use(express.json())
+app.use(express.json());
+app.use(cors({ origin: (process.env.CORS_ORIGIN?.split(',') || '*') as any }));
 
-app.use('/api', routes)
+app.get('/api/health', (_req, res) => {
+  res.json({ ok:true, service:'visicontrol-api', db_time: new Date().toISOString() });
+});
 
-app.use((_req, res) => res.status(404).json({ ok:false, message:'Not Found' }))
-export default app
+app.use('/api/auth', authRoutes);
+
+export default app;
+
+
