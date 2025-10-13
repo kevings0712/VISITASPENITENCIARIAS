@@ -19,10 +19,16 @@ export const pool = new Pool(
       }
 );
 
+// Helper tipado para consultas (TS y @types/pg nuevos)
 export const query = <T extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: any[]
-): Promise<QueryResult<T>> => {
-  return pool.query<T>(text, params);
-};
+): Promise<QueryResult<T>> => pool.query<T>(text, params);
+
+// ✅ Compatibilidad con código existente
+export const getPool = () => pool;
+export const getDb = () => pool;
+
+// (opcional) export default si en algún punto usaron default-import
+export default { pool, query, getPool, getDb };
 
