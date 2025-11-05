@@ -3,32 +3,38 @@ import { Pool, type QueryResult, type QueryResultRow } from 'pg';
 
 const isProd = process.env.NODE_ENV === 'production';
 
+// Permite controlar SSL con una var explícita
+// DB_SSL=true/false (por defecto: true en prod, false en dev)
+const wantSSL =
+  (process.env.DB_SSL ?? (isProd ? 'true' : 'false'))
+    .toString()
+    .toLowerCase() === 'true';
+
+const useUrl = !!process.env.DATABASE_URL;
+
 export const pool = new Pool(
-  process.env.DATABASE_URL
+  useUrl
     ? {
         connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false }
+        ssl: wantSSL ? { rejectUnauthorized: false } : false,
       }
     : {
-        host: process.env.PGHOST,
+        host: process.env.PGHOST || '127.0.0.1',
         port: Number(process.env.PGPORT ?? 5432),
-        database: process.env.PGDATABASE,
-        user: process.env.PGUSER,
+        database: process.env.PGDATABASE || 'visicontrol',
+        user: process.env.PGUSER || 'visictrl_admin',
         password: process.env.PGPASSWORD,
-        ssl: isProd ? { rejectUnauthorized: false } : false
+        ssl: wantSSL ? { rejectUnauthorized: false } : false,
       }
 );
 
-// Helper tipado para consultas (TS y @types/pg nuevos)
+// Helpers
 export const query = <T extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: any[]
 ): Promise<QueryResult<T>> => pool.query<T>(text, params);
 
-// ✅ Compatibilidad con código existente
 export const getPool = () => pool;
 export const getDb = () => pool;
 
-// (opcional) export default si en algún punto usaron default-import
 export default { pool, query, getPool, getDb };
-

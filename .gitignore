@@ -25,3 +25,14 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 src/backend/.github/
+.DS_Store
+node_modules/
+dist/
+build/
+.env
+.env.*
+**/.env
+**/.env.*
+.vite
+coverage/
+tmp/
